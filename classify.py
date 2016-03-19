@@ -8,6 +8,8 @@ import itertools
 from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
 from nltk import stem
+from nltk.stem.wordnet import WordNetLemmatizer
+from nltk.tokenize import sent_tokenize
 
 def sanitizeWord(word):
     puncSet = set(['.',',','(',')','?','!',':'])
@@ -19,56 +21,106 @@ def sanitizeWord(word):
 stopset = set(stopwords.words('english')) - set(('over', 'under', 'below', 'more', 'most', 'no', 'not', 'only', 'such', 'few', 'so', 'too', 'very', 'just', 'any', 'once'))
 
 reviews_1 = []
-for line in open('reviews_1.json'):
-    words = ""
+reviews_1_sentences = []
+for line in open('reviews_1_small.json'):
+    words = []
     for word in json.loads(line)['text'].split():
     	sanitized_word = sanitizeWord(word)
     	if sanitized_word not in stopset:
-        	words = words + sanitized_word + " "
-    reviews_1.append(words)		
+        	words.append(sanitized_word)
+	sentences = []
+	for sentence in sent_tokenize(json.loads(line)['text']):
+		sentence_words = []
+		for word in sentence.split():
+			sanitized_word = sanitizeWord(word)
+			if sanitized_word not in stopset:
+				sentence_words.append(sanitized_word)
+		sentences.append(sentence_words)
+    reviews_1.append(words)
+    reviews_1_sentences.append(sentences)	
 
 reviews_2 = []
-for line in open('reviews_2.json'):
-    words = ""
+reviews_2_sentences = []
+for line in open('reviews_2_small.json'):
+    words = []
     for word in json.loads(line)['text'].split():
     	sanitized_word = sanitizeWord(word)
     	if sanitized_word not in stopset:
-        	words = words + sanitized_word + " "
+        	words.append(sanitized_word)
+	sentences = []
+	for sentence in sent_tokenize(json.loads(line)['text']):
+		sentence_words = []
+		for word in sentence.split():
+			sanitized_word = sanitizeWord(word)
+			if sanitized_word not in stopset:
+				sentence_words.append(sanitized_word)
+		sentences.append(sentence_words)        	
     reviews_2.append(words)		
+    reviews_2_sentences.append(sentences)	
 
 reviews_3 = []
-for line in open('reviews_3.json'):
-    words = ""
+reviews_3_sentences = []
+for line in open('reviews_3_small.json'):
+    words = []
     for word in json.loads(line)['text'].split():
     	sanitized_word = sanitizeWord(word)
     	if sanitized_word not in stopset:
-        	words = words + sanitized_word + " "
+        	words.append(sanitized_word)
+	sentences = []
+	for sentence in sent_tokenize(json.loads(line)['text']):
+		sentence_words = []
+		for word in sentence.split():
+			sanitized_word = sanitizeWord(word)
+			if sanitized_word not in stopset:
+				sentence_words.append(sanitized_word)
+		sentences.append(sentence_words)        	
     reviews_3.append(words)		
+    reviews_3_sentences.append(sentences)	
 
 reviews_4 = []
-for line in open('reviews_4.json'):
-    words = ""
+reviews_4_sentences = []
+for line in open('reviews_4_small.json'):
+    words = []
     for word in json.loads(line)['text'].split():
     	sanitized_word = sanitizeWord(word)
     	if sanitized_word not in stopset:
-        	words = words + sanitized_word + " "
+        	words.append(sanitized_word)
+	sentences = []
+	for sentence in sent_tokenize(json.loads(line)['text']):
+		sentence_words = []
+		for word in sentence.split():
+			sanitized_word = sanitizeWord(word)
+			if sanitized_word not in stopset:
+				sentence_words.append(sanitized_word)
+		sentences.append(sentence_words)        	
     reviews_4.append(words)		
- 
+    reviews_4_sentences.append(sentences)	
+
 reviews_5 = []
-for line in open('reviews_5.json'):
-    words = ""
+reviews_5_sentences = []
+for line in open('reviews_5_small.json'):
+    words = []
     for word in json.loads(line)['text'].split():
     	sanitized_word = sanitizeWord(word)
     	if sanitized_word not in stopset:
-        	words = words + sanitized_word + " "
+        	words.append(sanitized_word)
+	sentences = []
+	for sentence in sent_tokenize(json.loads(line)['text']):
+		sentence_words = []
+		for word in sentence.split():
+			sanitized_word = sanitizeWord(word)
+			if sanitized_word not in stopset:
+				sentence_words.append(sanitized_word)
+		sentences.append(sentence_words)        	
     reviews_5.append(words)		
- 
-def word_split(data):	
-	data_new = []
-	for word in data:
-		word_filter = [i.lower() for i in word.split()]
-		data_new.append(word_filter)
-	return data_new
+    reviews_5_sentences.append(sentences)	
+
+# def word_split(data):	
+# 	data_new = []
+# 	for word in data:
+# 		word_filter = [i.lower() for i in word.split()]
+# 		data_new.append(word_filter)
+# 	return data_new
  
 # def word_split_sentiment(data):
 # 	data_new = []
@@ -83,7 +135,17 @@ def word_feats(words):
 def stemmed_word_feats(words):
 	porter_stemmer = stem.porter.PorterStemmer()
 	return dict([(porter_stemmer.stem(word), True) for word in words])
-      
+
+def lemmatized_word_feats(words):
+	lemmatizer = stem.wordnet.WordNetLemmatizer()
+	return dict([(lemmatizer.lemmatize(word), True) for word in words])
+
+def multiple_word_feats(words):
+	main_dict = dict(word_feats(words))
+	main_dict.update(stemmed_word_feats(words))
+	main_dict.update(lemmatized_word_feats(words))
+	return main_dict
+
 # def stopword_filtered_word_feats(words):
 #     return dict([(word, True) for word in words if word not in stopset])
  
@@ -112,13 +174,33 @@ def stemmed_word_feats(words):
 #     return dict([(ngram, True) for ngram in itertools.chain(words, bigrams) if ngram not in stopset])
  
 # Calculating Precision, Recall & F-measure
-def evaluate_classifier(featx):
+def evaluate_classifier(featx, sentences, back_half):
 	
-	one_star_feats = [(featx(f), '1') for f in word_split(reviews_1)]
-	two_star_feats = [(featx(f), '2') for f in word_split(reviews_2)]
-	three_star_feats = [(featx(f), '3') for f in word_split(reviews_3)]
-	four_star_feats = [(featx(f), '4') for f in word_split(reviews_4)]
-	five_star_feats = [(featx(f), '5') for f in word_split(reviews_5)]
+	if back_half:
+		back_reviews_1 = reviews_1[(len(reviews_1)*1/2):]
+		back_reviews_2 = reviews_2[(len(reviews_1)*1/2):]
+		back_reviews_3 = reviews_3[(len(reviews_1)*1/2):]
+		back_reviews_4 = reviews_4[(len(reviews_1)*1/2):]
+		back_reviews_5 = reviews_5[(len(reviews_1)*1/2):]
+
+		one_star_feats = [(featx(f), '1') for f in back_reviews_1]
+		two_star_feats = [(featx(f), '2') for f in back_reviews_2]
+		three_star_feats = [(featx(f), '3') for f in back_reviews_3]
+		four_star_feats = [(featx(f), '4') for f in back_reviews_4]
+		five_star_feats = [(featx(f), '5') for f in back_reviews_5]
+	elif sentences:
+		one_star_feats = [(featx(f), '1') for f in sentence_reviews_1]
+		two_star_feats = [(featx(f), '2') for f in sentence_reviews_2]
+		three_star_feats = [(featx(f), '3') for f in sentence_reviews_3]
+		four_star_feats = [(featx(f), '4') for f in sentence_reviews_4]
+		five_star_feats = [(featx(f), '5') for f in sentence_reviews_5]
+	else:
+		one_star_feats = [(featx(f), '1') for f in reviews_1]
+		two_star_feats = [(featx(f), '2') for f in reviews_2]
+		three_star_feats = [(featx(f), '3') for f in reviews_3]
+		four_star_feats = [(featx(f), '4') for f in reviews_4]
+		five_star_feats = [(featx(f), '5') for f in reviews_5]
+
 	    
 	one_star_cutoff = len(one_star_feats)*3/4
 	two_star_cutoff = len(two_star_feats)*3/4
@@ -130,7 +212,11 @@ def evaluate_classifier(featx):
 	testfeats = one_star_feats[one_star_cutoff:] + two_star_feats[two_star_cutoff:] + three_star_feats[three_star_cutoff:] + four_star_feats[four_star_cutoff:] + five_star_feats[five_star_cutoff:]
 
 
-	classifierName = 'Maximum Entropy'
+	if back_half:
+		classifierName = 'Maximum Entropy (back half)'
+	else:
+		classifierName = 'Maximum Entropy'
+
 	classifier = MaxentClassifier.train(trainfeats, 'GIS', trace=0, encoding=None, labels=None, sparse=True, gaussian_prior_sigma=0, max_iter = 1)
 
 		
@@ -243,8 +329,11 @@ def evaluate_classifier(featx):
 	# print ''
 	
 		
-evaluate_classifier(word_feats)
+# evaluate_classifier(word_feats)
 # evaluate_classifier(stemmed_word_feats)
+evaluate_classifier(multiple_word_feats, False, False)
+evaluate_classifier(multiple_word_feats, False, True)
+evaluate_classifier(multiple_word_feats, True, False)
 #evaluate_classifier(stopword_filtered_word_feats)
 #evaluate_classifier(bigram_word_feats)	
 #evaluate_classifier(bigram_word_feats_stopwords)
