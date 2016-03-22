@@ -10,6 +10,8 @@ from nltk.metrics import BigramAssocMeasures
 from nltk import stem
 from nltk.stem.wordnet import WordNetLemmatizer
 
+reviews = []
+
 def sanitizeWord(word):
     puncSet = set(['.',',','(',')','?','!',':'])
     for punc in puncSet:
@@ -17,37 +19,41 @@ def sanitizeWord(word):
     word = word.lower()
     return word
 
-def sanitize(string):
+def sanitize(string, remove_stopwords):
 	sanitized_words = []
 	for word in json.loads(string)['text'].split():
 		sanitized_word = sanitizeWord(word)
-		if sanitized_word not in stopset:
+		if not remove_stopwords or sanitized_word not in stopset:
 			sanitized_words.append(sanitized_word)
 	return sanitized_words
 
 stopset = set(stopwords.words('english')) - set(('over', 'under', 'below', 'more', 'most', 'no', 'not', 'only', 'such', 'few', 'so', 'too', 'very', 'just', 'any', 'once'))
-reviews_1 = []
-reviews_2 = []
-reviews_3 = []
-reviews_4 = []
-reviews_5 = []
 
-def load_data():
+def load_data(remove_stopwords):
+
+	reviews[:] = []
+	reviews.append([])
+	reviews.append([])
+	reviews.append([])
+	reviews.append([])
+	reviews.append([])
+	reviews.append([])
+
 	print "Loading data..."
 	for line in open('reviews_1_small.json'):
-	    reviews_1.append(sanitize(line))
+	    reviews[1].append(sanitize(line, remove_stopwords))
 
 	for line in open('reviews_2_small.json'):
-	    reviews_2.append(sanitize(line))		
+	    reviews[2].append(sanitize(line, remove_stopwords))		
 
 	for line in open('reviews_3_small.json'):
-	    reviews_3.append(sanitize(line))		
+	    reviews[3].append(sanitize(line, remove_stopwords))		
 
 	for line in open('reviews_4_small.json'):     	
-	    reviews_4.append(sanitize(line))		
+	    reviews[4].append(sanitize(line, remove_stopwords))		
 
 	for line in open('reviews_5_small.json'):
-	    reviews_5.append(sanitize(line))
+	    reviews[5].append(sanitize(line, remove_stopwords))
 	
 def word_feats(words):	
 	return dict([(word, True) for word in words])
@@ -68,33 +74,36 @@ def bigram_word_feats(words, score_fn=BigramAssocMeasures.chi_sq, n=200):
 
 def multiple_word_feats(words, number_of_features):
 	main_dict = dict(word_feats(words))
-	main_dict.update(stemmed_word_feats(words))
-	main_dict.update(lemmatized_word_feats(words))
-	main_dict.update(bigram_word_feats(words))
+	if number_of_features > 1:
+		main_dict.update(stemmed_word_feats(words))
+	if number_of_features > 2:
+		main_dict.update(lemmatized_word_feats(words))
+	if number_of_features > 3:
+		main_dict.update(bigram_word_feats(words))
 	return main_dict
  
 # Calculating Precision, Recall & F-measure
-def evaluate_classifier(featx, back_half):
+def evaluate_classifier(featx, back_half, number_of_features, remove_stopwords):
 	
 	print "Adding features..."
 	if back_half:
-		back_reviews_1 = reviews_1[(len(reviews_1)*1/2):]
-		back_reviews_2 = reviews_2[(len(reviews_1)*1/2):]
-		back_reviews_3 = reviews_3[(len(reviews_1)*1/2):]
-		back_reviews_4 = reviews_4[(len(reviews_1)*1/2):]
-		back_reviews_5 = reviews_5[(len(reviews_1)*1/2):]
+		back_reviews_1 = reviews[1][(len(reviews[1])*1/2):]
+		back_reviews_2 = reviews[2][(len(reviews[2])*1/2):]
+		back_reviews_3 = reviews[3][(len(reviews[3])*1/2):]
+		back_reviews_4 = reviews[4][(len(reviews[4])*1/2):]
+		back_reviews_5 = reviews[5][(len(reviews[5])*1/2):]
 
-		one_star_feats = [(featx(f), '1') for f in back_reviews_1]
-		two_star_feats = [(featx(f), '2') for f in back_reviews_2]
-		three_star_feats = [(featx(f), '3') for f in back_reviews_3]
-		four_star_feats = [(featx(f), '4') for f in back_reviews_4]
-		five_star_feats = [(featx(f), '5') for f in back_reviews_5]
+		one_star_feats = [(featx(f, number_of_features), '1') for f in back_reviews_1]
+		two_star_feats = [(featx(f, number_of_features), '2') for f in back_reviews_2]
+		three_star_feats = [(featx(f, number_of_features), '3') for f in back_reviews_3]
+		four_star_feats = [(featx(f, number_of_features), '4') for f in back_reviews_4]
+		five_star_feats = [(featx(f, number_of_features), '5') for f in back_reviews_5]
 	else:
-		one_star_feats = [(featx(f), '1') for f in reviews_1]
-		two_star_feats = [(featx(f), '2') for f in reviews_2]
-		three_star_feats = [(featx(f), '3') for f in reviews_3]
-		four_star_feats = [(featx(f), '4') for f in reviews_4]
-		five_star_feats = [(featx(f), '5') for f in reviews_5]
+		one_star_feats = [(featx(f, number_of_features), '1') for f in reviews[1]]
+		two_star_feats = [(featx(f, number_of_features), '2') for f in reviews[2]]
+		three_star_feats = [(featx(f, number_of_features), '3') for f in reviews[3]]
+		four_star_feats = [(featx(f, number_of_features), '4') for f in reviews[4]]
+		five_star_feats = [(featx(f, number_of_features), '5') for f in reviews[5]]
 
 	    
 	one_star_cutoff = len(one_star_feats)*3/4
@@ -106,11 +115,19 @@ def evaluate_classifier(featx, back_half):
 	trainfeats = one_star_feats[:one_star_cutoff] + two_star_feats[:two_star_cutoff] + three_star_feats[:three_star_cutoff] + four_star_feats[:four_star_cutoff] + five_star_feats[:five_star_cutoff]
 	testfeats = one_star_feats[one_star_cutoff:] + two_star_feats[two_star_cutoff:] + three_star_feats[three_star_cutoff:] + four_star_feats[four_star_cutoff:] + five_star_feats[five_star_cutoff:]
 
-
+	classifierName = "Maximum Entropy (Features: Words"
+	if remove_stopwords:
+		classifierName += ", Removed Stopwords"
+	if number_of_features > 1:
+		classifierName += ", Stemmed Words"
+	if number_of_features > 2:
+		classifierName += ", Lemmatized Words"
+	if number_of_features > 3:
+		classifierName += ", Bigrams"
 	if back_half:
-		classifierName = 'Maximum Entropy'
-	else:
-		classifierName = 'Maximum Entropy'
+		classifierName += ', back half'
+
+	classifierName += ")"
 
 	print "Training..."
 	classifier = MaxentClassifier.train(trainfeats, 'GIS', trace=0, encoding=None, labels=None, sparse=True, gaussian_prior_sigma=0, max_iter = 1)
@@ -187,7 +204,6 @@ def evaluate_classifier(featx, back_half):
 		testing_this_round = trainfeats[i*subset_size:][:subset_size]
 		training_this_round = trainfeats[:i*subset_size] + trainfeats[(i+1)*subset_size:]
 		
-		classifierName = 'Maximum Entropy'
 		classifier = MaxentClassifier.train(training_this_round, 'GIS', trace=0, encoding=None, labels=None, sparse=True, gaussian_prior_sigma=0, max_iter = 1)
 				
 		refsets = collections.defaultdict(set)
@@ -243,11 +259,13 @@ def evaluate_classifier(featx, back_half):
 	print ''
 	
 		
-# evaluate_classifier(word_feats)
-# evaluate_classifier(stemmed_word_feats)
-# evaluate_classifier(multiple_word_feats, False)
-load_data()
-evaluate_classifier(multiple_word_feats, True)
-#evaluate_classifier(stopword_filtered_word_feats)
-#evaluate_classifier(bigram_word_feats)	
-#evaluate_classifier(bigram_word_feats_stopwords)
+load_data(False)
+evaluate_classifier(multiple_word_feats, False, 1, False)
+load_data(True)
+evaluate_classifier(multiple_word_feats, False, 1, True)
+evaluate_classifier(multiple_word_feats, False, 2, True)
+evaluate_classifier(multiple_word_feats, False, 3, True)
+evaluate_classifier(multiple_word_feats, False, 4, True)
+evaluate_classifier(multiple_word_feats, True, 4, True)
+
+
