@@ -1,0 +1,188 @@
+Loading data...
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words))
+---------------------------------------
+accuracy: 0.3216
+precision 0.464122839479
+recall 0.3216
+f-measure 0.285663713742
+
+  -0.000 terrible==True and label is '4'
+  -0.000 rude==True and label is '4'
+  -0.000 mediocre==True and label is '4'
+  -0.000 german==True and label is '1'
+  -0.000 dirty==True and label is '5'
+  -0.000 unique==True and label is '1'
+  -0.000 fantastic==True and label is '1'
+  -0.000 overcooked==True and label is '5'
+  -0.000 sad==True and label is '5'
+  -0.000 perfectly==True and label is '1'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words))
+---------------------------------------
+accuracy: 0.4016
+precision 0.543512157879
+recall 0.314505418971
+f-measure 0.383021380926
+
+Loading data...
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words, Removed Stopwords))
+---------------------------------------
+accuracy: 0.3624
+precision 0.490782004934
+recall 0.3624
+f-measure 0.344356037182
+
+  -0.000 terrible==True and label is '4'
+  -0.000 rude==True and label is '4'
+  -0.000 mediocre==True and label is '4'
+  -0.000 german==True and label is '1'
+  -0.000 dirty==True and label is '5'
+  -0.000 unique==True and label is '1'
+  -0.000 fantastic==True and label is '1'
+  -0.000 overcooked==True and label is '5'
+  -0.000 sad==True and label is '5'
+  -0.000 perfectly==True and label is '1'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words, Removed Stopwords))
+---------------------------------------
+accuracy: 0.4518
+precision 0.541237549384
+recall 0.35254976334
+f-measure 0.447144084545
+
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words))
+---------------------------------------
+accuracy: 0.3576
+precision 0.493632543789
+recall 0.3576
+f-measure 0.344454066459
+
+  -0.000 terribl==True and label is '4'
+  -0.000 bland==True and label is '5'
+  -0.000 terrible==True and label is '4'
+  -0.000 rude==True and label is '4'
+  -0.000 mediocr==True and label is '4'
+  -0.000 mediocre==True and label is '4'
+  -0.000 german==True and label is '1'
+  -0.000 dirti==True and label is '5'
+  -0.000 dirty==True and label is '5'
+  -0.000 uniqu==True and label is '1'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words))
+---------------------------------------
+accuracy: 0.4576
+precision 0.534286091262
+recall 0.355359661232
+f-measure 0.453679498946
+
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words))
+---------------------------------------
+accuracy: 0.3552
+precision 0.488513987173
+recall 0.3552
+f-measure 0.339183726439
+
+  -0.000 terribl==True and label is '4'
+  -0.000 bland==True and label is '5'
+  -0.000 terrible==True and label is '4'
+  -0.000 rude==True and label is '4'
+  -0.000 mediocr==True and label is '4'
+  -0.000 mediocre==True and label is '4'
+  -0.000 german==True and label is '1'
+  -0.000 dirti==True and label is '5'
+  -0.000 dirty==True and label is '5'
+  -0.000 uniqu==True and label is '1'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words))
+---------------------------------------
+accuracy: 0.4542
+precision 0.540176467482
+recall 0.353139338091
+f-measure 0.451707961155
+
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words, Bigrams))
+---------------------------------------
+accuracy: 0.396
+precision 0.493902815397
+recall 0.396
+f-measure 0.382486580646
+
+  -0.000 terribl==True and label is '4'
+  -0.000 bland==True and label is '5'
+  -0.000 terrible==True and label is '4'
+  -0.000 rude==True and label is '4'
+  -0.000 mediocr==True and label is '4'
+  -0.000 mediocre==True and label is '4'
+  -0.000 german==True and label is '1'
+  -0.000 (u'great', u'place')==True and label is '1'
+  -0.000 dirti==True and label is '5'
+  -0.000 dirty==True and label is '5'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words, Bigrams))
+---------------------------------------
+accuracy: 0.4902
+precision 0.546338815562
+recall 0.381706943411
+f-measure 0.488999823784
+
+Adding features...
+Training...
+Testing...
+
+---------------------------------------
+SINGLE FOLD RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words, Bigrams, back half))
+---------------------------------------
+accuracy: 0.4352
+precision 0.479456287165
+recall 0.4352
+f-measure 0.420574059426
+
+  -0.000 pancake==True and label is '2'
+  -0.000 pancak==True and label is '2'
+  -0.000 pancake==True and label is '3'
+  -0.000 pancak==True and label is '3'
+  -0.000 pancakes==True and label is '2'
+  -0.000 pancakes==True and label is '3'
+  -0.000 dri==True and label is '5'
+  -0.000 terrible==True and label is '4'
+  -0.000 dry==True and label is '5'
+  -0.000 horribl==True and label is '5'
+
+---------------------------------------
+N-FOLD CROSS VALIDATION RESULT (Maximum Entropy (Features: Words, Removed Stopwords, Stemmed Words, Lemmatized Words, Bigrams, back half))
+---------------------------------------
+accuracy: 0.5636
+precision 0.608844335373
+recall 0.444890858038
+f-measure 0.566351838984
+
