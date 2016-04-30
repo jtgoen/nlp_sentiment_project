@@ -9,8 +9,14 @@ from nltk.collocations import BigramCollocationFinder
 from nltk.metrics import BigramAssocMeasures
 from nltk import stem
 from nltk.stem.wordnet import WordNetLemmatizer
+import nltk.data
 
 reviews = []
+reviews_sents = []
+sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
+def tokenize_sentences(review):
+	sentences = sent_detector.tokenize(review.strip())
+	return sentences
 
 def sanitizeWord(word):
     puncSet = set(['.',',','(',')','?','!',':'])
@@ -19,9 +25,9 @@ def sanitizeWord(word):
     word = word.lower()
     return word
 
-def sanitize(string, remove_stopwords):
+def sanitize(words, remove_stopwords):
 	sanitized_words = []
-	for word in json.loads(string)['text'].split():
+	for word in words.split():
 		sanitized_word = sanitizeWord(word)
 		if not remove_stopwords or sanitized_word not in stopset:
 			sanitized_words.append(sanitized_word)
@@ -39,18 +45,46 @@ def load_data(remove_stopwords):
 	reviews.append([])
 	reviews.append([])
 
+	reviews_sents[:] = []
+	reviews_sents.append([])
+	reviews_sents.append([])
+	reviews_sents.append([])
+	reviews_sents.append([])
+	reviews_sents.append([])
+	reviews_sents.append([])
+
 	print "Loading data..."
 	for line in open('reviews_1_small.json'):
-	    reviews[1].append(sanitize(line, remove_stopwords))
+	    reviews[1].append(sanitize(json.loads(line)['text'], remove_stopwords))
+	    sentences = tokenize_sentences(json.loads(line)['text'])
+	    sentence_bags = []
+	    for sentence in sentences:
+	    	sentence_bags.append(sanitize(sentence, remove_stopwords))
+    	reviews_sents[1].append(sentence_bags)
 
 	for line in open('reviews_2_small.json'):
-	    reviews[2].append(sanitize(line, remove_stopwords))		
+	    reviews[2].append(sanitize(json.loads(line)['text'], remove_stopwords))		
+	    sentences = tokenize_sentences(json.loads(line)['text'])
+	    sentence_bags = []
+	    for sentence in sentences:
+	    	sentence_bags.append(sanitize(sentence, remove_stopwords))
+    	reviews_sents[2].append(sentence_bags)
 
 	for line in open('reviews_4_small.json'):     	
-	    reviews[4].append(sanitize(line, remove_stopwords))		
+	    reviews[4].append(sanitize(json.loads(line)['text'], remove_stopwords))		
+	    sentences = tokenize_sentences(json.loads(line)['text'])
+	    sentence_bags = []
+	    for sentence in sentences:
+	    	sentence_bags.append(sanitize(sentence, remove_stopwords))
+    	reviews_sents[4].append(sentence_bags)
 
 	for line in open('reviews_5_small.json'):
-	    reviews[5].append(sanitize(line, remove_stopwords))
+	    reviews[5].append(sanitize(json.loads(line)['text'], remove_stopwords))
+	    sentences = tokenize_sentences(json.loads(line)['text'])
+	    sentence_bags = []
+	    for sentence in sentences:
+	    	sentence_bags.append(sanitize(sentence, remove_stopwords))
+    	reviews_sents[5].append(sentence_bags)
 	
 def word_feats(words):	
 	return dict([(word, True) for word in words])
@@ -96,20 +130,33 @@ def multiple_word_feats(words, number_of_features):
 		if bool(feats):
 			main_dict.update(feats)
 	return main_dict
- 
+
 # Calculating Precision, Recall & F-measure
 def evaluate_classifier(featx, number_of_features, remove_stopwords):
 	
 	print "Adding features..."
 
-	neg_feats = [(featx(f, number_of_features), 'neg') for f in (reviews[1] + reviews[2])]
-	pos_feats = [(featx(f, number_of_features), 'pos') for f in (reviews[4] + reviews[5])]
+	# create labeled bags of words (dictionary)
+	neg_reviews = reviews[1] + reviews[2]
+	pos_reviews = reviews[4] + reviews[5]
+	random.shuffle(neg_reviews)
+	random.shuffle(pos_reviews)
+	neg_feats = [(featx(f, number_of_features), 'neg') for f in neg_reviews]
+	pos_feats = [(featx(f, number_of_features), 'pos') for f in pos_reviews]
 
 	neg_cutoff = len(neg_feats)*3/4
 	pos_cutoff = len(pos_feats)*3/4
 
 	trainfeats = neg_feats[:neg_cutoff] + pos_feats[:pos_cutoff]
-	testfeats = neg_feats[neg_cutoff:] + pos_feats[pos_cutoff:]	
+	testfeats = neg_feats[neg_cutoff:] + pos_feats[pos_cutoff:]
+
+	neg_sent_reviews = reviews_sents[1] + reviews_sents[2]
+	pos_sent_reviews = reviews_sents[4] + reviews_sents[5]
+	random.shuffle(neg_sent_reviews)
+	random.shuffle(pos_sent_reviews)
+	neg_sent_feats = [(sentences, 'neg') for sentences in neg_sent_reviews]
+	pos_sent_feats = [(sentences, 'pos') for sentences in pos_sent_reviews]
+	test_sent_feats = neg_sent_feats[neg_cutoff:] + pos_sent_feats[pos_cutoff:]
  
 	classifierName = "Maximum Entropy (Features: Words"
 	if remove_stopwords:
@@ -128,6 +175,8 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 		
 	refsets = collections.defaultdict(set)
 	testsets = collections.defaultdict(set)
+	sent_refsets = collections.defaultdict(set)
+	sent_testsets = collections.defaultdict(set)
 
 	print "Testing..."
 	# for i, (feats, label) in enumerate(testfeats):
@@ -135,19 +184,44 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 	# 	pdist = classifier.prob_classify(feats)
 	# 	print 'neg: %f\tpos: %f\t' % (pdist.prob('neg'), pdist.prob('pos'))
 	for i, (feats, label) in enumerate(testfeats):
-			refsets[label].add(i)
-			observed = classifier.classify(feats)
-			testsets[observed].add(i)
+		refsets[label].add(i)
+		observed = classifier.classify(feats)
+		testsets[observed].add(i)
 
-	accuracy = nltk.classify.util.accuracy(classifier, testfeats)
+	print "Testing on Sentences..."
+
+	for i, (sentences, label) in enumerate(test_sent_feats):
+		sent_refsets[label].add(i)
+		pos_count = 0
+		neg_count = 0
+		for sentence in sentences:
+			observed = classifier.classify(featx(sentence, 4))
+			if observed == 'neg':
+				neg_count += 1
+			elif observed == 'pos':
+				pos_count += 1
+		results = 'neg'
+		if (pos_count > neg_count):
+			results = 'pos'
+		sent_testsets[results].add(i)
+	# accuracy = nltk.classify.util.accuracy(classifier, testfeats)
+	accuracy = nltk.classify.util.accuracy(classifier, test_sent_feats)
 	
-	neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
-	neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
-	neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
+	# neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
+	# neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
+	# neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
 
-	pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
-	pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
-	pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])	
+	# pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
+	# pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
+	# pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])	
+
+	neg_precision = nltk.metrics.precision(sent_refsets['neg'], sent_testsets['neg'])
+	neg_recall = nltk.metrics.recall(sent_refsets['neg'], sent_testsets['neg'])
+	neg_fmeasure =  nltk.metrics.f_measure(sent_refsets['neg'], sent_testsets['neg'])
+
+	pos_precision = nltk.metrics.precision(sent_refsets['pos'], sent_testsets['pos'])
+	pos_recall = nltk.metrics.recall(sent_refsets['pos'], sent_testsets['pos'])
+	pos_fmeasure =  nltk.metrics.f_measure(sent_refsets['pos'], sent_testsets['pos'])	
 
 	print ''
 	print '---------------------------------------'
