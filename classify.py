@@ -110,6 +110,8 @@ def evaluate_classifier(featx, back_half, number_of_features, remove_stopwords):
 		back_reviews_3 = []
 		back_reviews_4 = []
 		back_reviews_5 = []
+		back_reviews_neg = []
+		back_reviews_pos = []
 		for review in reviews[1]:
 			back_reviews_1.append(review[len(review)/2:])
 		for review in reviews[5]:
@@ -131,6 +133,9 @@ def evaluate_classifier(featx, back_half, number_of_features, remove_stopwords):
 		three_star_feats = [(featx(f, number_of_features), '3') for f in reviews[3]]
 		four_star_feats = [(featx(f, number_of_features), '4') for f in reviews[4]]
 		five_star_feats = [(featx(f, number_of_features), '5') for f in reviews[5]]
+		neg_feats = [(featx(f, number_of_features), 'neg') for f in (reviews[1] + reviews[2])]
+		pos_feats = [(featx(f, number_of_features), 'pos') for f in (reviews[4] + reviews[5])]
+
 
 	    
 	one_star_cutoff = len(one_star_feats)*3/4
@@ -138,9 +143,14 @@ def evaluate_classifier(featx, back_half, number_of_features, remove_stopwords):
 	three_star_cutoff = len(three_star_feats)*3/4
 	four_star_cutoff = len(four_star_feats)*3/4
 	five_star_cutoff = len(five_star_feats)*3/4
+	neg_cutoff = len(neg_feats)*3/4
+	pos_cutoff = len(pos_feats)*3/4
+
+	trainfeats = neg_feats[:neg_cutoff] + pos_feats[:pos_cutoff]
+	testfeats = neg_feats[neg_cutoff:] + pos_feats[pos_cutoff:]	
  
-	trainfeats = one_star_feats[:one_star_cutoff] + five_star_feats[:five_star_cutoff]
-	testfeats = one_star_feats[one_star_cutoff:] + five_star_feats[five_star_cutoff:]
+	# trainfeats = one_star_feats[:one_star_cutoff] + five_star_feats[:five_star_cutoff]
+	# testfeats = one_star_feats[one_star_cutoff:] + five_star_feats[five_star_cutoff:]
 
 	# trainfeats = one_star_feats[:one_star_cutoff] + two_star_feats[:two_star_cutoff] + three_star_feats[:three_star_cutoff] + four_star_feats[:four_star_cutoff] + five_star_feats[:five_star_cutoff]
 	# testfeats = one_star_feats[one_star_cutoff:] + two_star_feats[two_star_cutoff:] + three_star_feats[three_star_cutoff:] + four_star_feats[four_star_cutoff:] + five_star_feats[five_star_cutoff:]
@@ -166,137 +176,172 @@ def evaluate_classifier(featx, back_half, number_of_features, remove_stopwords):
 	testsets = collections.defaultdict(set)
 
 	print "Testing..."
-	for i, (feats, label) in enumerate(testfeats):
-		refsets[label].add(i)
-		pdist = classifier.prob_classify(feats)
-		print '1: %f\t5: %f\t' % (pdist.prob('1'), pdist.prob('5'))
 	# for i, (feats, label) in enumerate(testfeats):
-	# 		refsets[label].add(i)
-	# 		observed = classifier.classify(feats)
-	# 		testsets[observed].add(i)
+	# 	refsets[label].add(i)
+	# 	pdist = classifier.prob_classify(feats)
+	# 	print '1: %f\t5: %f\t' % (pdist.prob('1'), pdist.prob('5'))
+	for i, (feats, label) in enumerate(testfeats):
+			refsets[label].add(i)
+			observed = classifier.classify(feats)
+			testsets[observed].add(i)
 
-	# accuracy = nltk.classify.util.accuracy(classifier, testfeats)
+	accuracy = nltk.classify.util.accuracy(classifier, testfeats)
 	# five_star_precision = nltk.metrics.precision(refsets['5'], testsets['5'])
 	# five_star_recall = nltk.metrics.recall(refsets['5'], testsets['5'])
 	# five_star_fmeasure = nltk.metrics.f_measure(refsets['5'], testsets['5'])
-	# # four_star_precision = nltk.metrics.precision(refsets['4'], testsets['4'])
-	# # four_star_recall = nltk.metrics.recall(refsets['4'], testsets['4'])
-	# # four_star_fmeasure = nltk.metrics.f_measure(refsets['4'], testsets['4'])	
-	# # three_star_precision = nltk.metrics.precision(refsets['3'], testsets['3'])
-	# # three_star_recall = nltk.metrics.recall(refsets['3'], testsets['3'])
-	# # three_star_fmeasure = nltk.metrics.f_measure(refsets['3'], testsets['3'])
-	# # two_star_precision = nltk.metrics.precision(refsets['2'], testsets['2'])
-	# # two_star_recall = nltk.metrics.recall(refsets['2'], testsets['2'])
-	# # two_star_fmeasure = nltk.metrics.f_measure(refsets['2'], testsets['2'])	
+	# four_star_precision = nltk.metrics.precision(refsets['4'], testsets['4'])
+	# four_star_recall = nltk.metrics.recall(refsets['4'], testsets['4'])
+	# four_star_fmeasure = nltk.metrics.f_measure(refsets['4'], testsets['4'])	
+	# three_star_precision = nltk.metrics.precision(refsets['3'], testsets['3'])
+	# three_star_recall = nltk.metrics.recall(refsets['3'], testsets['3'])
+	# three_star_fmeasure = nltk.metrics.f_measure(refsets['3'], testsets['3'])
+	# two_star_precision = nltk.metrics.precision(refsets['2'], testsets['2'])
+	# two_star_recall = nltk.metrics.recall(refsets['2'], testsets['2'])
+	# two_star_fmeasure = nltk.metrics.f_measure(refsets['2'], testsets['2'])	
 	# one_star_precision = nltk.metrics.precision(refsets['1'], testsets['1'])
 	# one_star_recall = nltk.metrics.recall(refsets['1'], testsets['1'])
 	# one_star_fmeasure =  nltk.metrics.f_measure(refsets['1'], testsets['1'])
 	
-	# print ''
-	# print '---------------------------------------'
-	# print 'SINGLE FOLD RESULT ' + '(' + classifierName + ')'
-	# print '---------------------------------------'
-	# print 'accuracy:', accuracy
-	# # print 'precision', (five_star_precision + four_star_precision + three_star_precision + two_star_precision + one_star_precision) / 5
-	# # print 'recall', (five_star_recall + four_star_recall + three_star_recall + two_star_recall + one_star_recall) / 5
-	# # print 'f-measure', (five_star_fmeasure + four_star_fmeasure + three_star_fmeasure + two_star_fmeasure + one_star_fmeasure) / 5
+	neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
+	neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
+	neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
+
+	pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
+	pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
+	pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])	
+
+	print ''
+	print '---------------------------------------'
+	print 'SINGLE FOLD RESULT ' + '(' + classifierName + ')'
+	print '---------------------------------------'
+	print 'accuracy:', accuracy
+	# print 'precision', (five_star_precision + four_star_precision + three_star_precision + two_star_precision + one_star_precision) / 5
+	# print 'recall', (five_star_recall + four_star_recall + three_star_recall + two_star_recall + one_star_recall) / 5
+	# print 'f-measure', (five_star_fmeasure + four_star_fmeasure + three_star_fmeasure + two_star_fmeasure + one_star_fmeasure) / 5
 	# print 'precision', (five_star_precision + one_star_precision) / 2
 	# print 'recall', (five_star_recall + one_star_recall) / 2
 	# print 'f-measure', (five_star_fmeasure + one_star_fmeasure) / 2
-	# print ''
-	# classifier.show_most_informative_features()
+	print 'precision', (pos_precision + neg_precision) / 2
+	print 'recall', (pos_recall + neg_recall) / 2
+	print 'f-measure', (pos_fmeasure + neg_fmeasure) / 2
+	print ''
+	classifier.show_most_informative_features()
 	
-	# print ''
+	print ''
 	
-	# # CROSS VALIDATION
+	# CROSS VALIDATION
 	
-	# #trainfeats = one_star_feats + two_star_feats + three_star_feats + four_star_feats + five_star_feats
-	# trainfeats = one_star_feats + five_star_feats
-	
-	# # SHUFFLE TRAIN SET
-	# # As in cross validation, the test chunk might have only negative or only positive data	
-	# random.shuffle(trainfeats)	
-	# n = 5 # 5-fold cross-validation	
+	#trainfeats = one_star_feats + two_star_feats + three_star_feats + four_star_feats + five_star_feats
+	#trainfeats = one_star_feats + five_star_feats
+	trainfeats = neg_feats + pos_feats
+	# SHUFFLE TRAIN SET
+	# As in cross validation, the test chunk might have only negative or only positive data	
+	random.shuffle(trainfeats)	
+	n = 5 # 5-fold cross-validation	
 			
-	# subset_size = len(trainfeats) / n
-	# accuracy = []
-	# five_star_precision = []
-	# five_star_recall = []
-	# four_star_precision = []
-	# four_star_recall = []
-	# three_star_precision = []
-	# three_star_recall = []
-	# two_star_precision = []
-	# two_star_recall = []
-	# one_star_precision = []
-	# one_star_recall = []
-	# five_star_fmeasure = []
-	# four_star_fmeasure = []
-	# three_star_fmeasure = []
-	# two_star_fmeasure = []
-	# one_star_fmeasure = []
-	# cv_count = 1
+	subset_size = len(trainfeats) / n
+	accuracy = []
+	five_star_precision = []
+	five_star_recall = []
+	four_star_precision = []
+	four_star_recall = []
+	three_star_precision = []
+	three_star_recall = []
+	two_star_precision = []
+	two_star_recall = []
+	one_star_precision = []
+	one_star_recall = []
+	neg_precision = []
+	neg_recall = []
+	pos_precision = []
+	pos_recall = []
+	five_star_fmeasure = []
+	four_star_fmeasure = []
+	three_star_fmeasure = []
+	two_star_fmeasure = []
+	one_star_fmeasure = []
+	neg_fmeasure = []
+	pos_fmeasure = []
+	cv_count = 1
 
-	# for i in range(n):		
-	# 	testing_this_round = trainfeats[i*subset_size:][:subset_size]
-	# 	training_this_round = trainfeats[:i*subset_size] + trainfeats[(i+1)*subset_size:]
+	for i in range(n):		
+		testing_this_round = trainfeats[i*subset_size:][:subset_size]
+		training_this_round = trainfeats[:i*subset_size] + trainfeats[(i+1)*subset_size:]
 		
-	# 	classifier = MaxentClassifier.train(training_this_round, 'GIS', trace=0, encoding=None, labels=None, sparse=True, gaussian_prior_sigma=0, max_iter = 1)
+		classifier = MaxentClassifier.train(training_this_round, 'GIS', trace=0, encoding=None, labels=None, sparse=True, gaussian_prior_sigma=0, max_iter = 1)
 				
-	# 	refsets = collections.defaultdict(set)
-	# 	testsets = collections.defaultdict(set)
-	# 	for i, (feats, label) in enumerate(testing_this_round):
-	# 		refsets[label].add(i)
-	# 		observed = classifier.classify(feats)
-	# 		testsets[observed].add(i)
+		refsets = collections.defaultdict(set)
+		testsets = collections.defaultdict(set)
+		for i, (feats, label) in enumerate(testing_this_round):
+			refsets[label].add(i)
+			observed = classifier.classify(feats)
+			testsets[observed].add(i)
 		
-	# 	cv_accuracy = nltk.classify.util.accuracy(classifier, testing_this_round)
-	# 	cv_five_star_precision = nltk.metrics.precision(refsets['5'], testsets['5'])
-	# 	cv_five_star_recall = nltk.metrics.recall(refsets['5'], testsets['5'])
-	# 	cv_five_star_fmeasure = nltk.metrics.f_measure(refsets['5'], testsets['5'])
-	# 	# cv_four_star_precision = nltk.metrics.precision(refsets['4'], testsets['4'])
-	# 	# cv_four_star_recall = nltk.metrics.recall(refsets['4'], testsets['4'])
-	# 	# cv_four_star_fmeasure = nltk.metrics.f_measure(refsets['4'], testsets['4'])
-	# 	# cv_three_star_precision = nltk.metrics.precision(refsets['3'], testsets['3'])
-	# 	# cv_three_star_recall = nltk.metrics.recall(refsets['3'], testsets['3'])
-	# 	# cv_three_star_fmeasure = nltk.metrics.f_measure(refsets['3'], testsets['3'])
-	# 	# cv_two_star_precision = nltk.metrics.precision(refsets['2'], testsets['2'])
-	# 	# cv_two_star_recall = nltk.metrics.recall(refsets['2'], testsets['2'])
-	# 	# cv_two_star_fmeasure = nltk.metrics.f_measure(refsets['2'], testsets['2'])
-	# 	cv_one_star_precision = nltk.metrics.precision(refsets['1'], testsets['1'])
-	# 	cv_one_star_recall = nltk.metrics.recall(refsets['1'], testsets['1'])
-	# 	cv_one_star_fmeasure =  nltk.metrics.f_measure(refsets['1'], testsets['1'])
+		cv_accuracy = nltk.classify.util.accuracy(classifier, testing_this_round)
+		# cv_five_star_precision = nltk.metrics.precision(refsets['5'], testsets['5'])
+		# cv_five_star_recall = nltk.metrics.recall(refsets['5'], testsets['5'])
+		# cv_five_star_fmeasure = nltk.metrics.f_measure(refsets['5'], testsets['5'])
+		# cv_four_star_precision = nltk.metrics.precision(refsets['4'], testsets['4'])
+		# cv_four_star_recall = nltk.metrics.recall(refsets['4'], testsets['4'])
+		# cv_four_star_fmeasure = nltk.metrics.f_measure(refsets['4'], testsets['4'])
+		# cv_three_star_precision = nltk.metrics.precision(refsets['3'], testsets['3'])
+		# cv_three_star_recall = nltk.metrics.recall(refsets['3'], testsets['3'])
+		# cv_three_star_fmeasure = nltk.metrics.f_measure(refsets['3'], testsets['3'])
+		# cv_two_star_precision = nltk.metrics.precision(refsets['2'], testsets['2'])
+		# cv_two_star_recall = nltk.metrics.recall(refsets['2'], testsets['2'])
+		# cv_two_star_fmeasure = nltk.metrics.f_measure(refsets['2'], testsets['2'])
+		# cv_one_star_precision = nltk.metrics.precision(refsets['1'], testsets['1'])
+		# cv_one_star_recall = nltk.metrics.recall(refsets['1'], testsets['1'])
+		# cv_one_star_fmeasure =  nltk.metrics.f_measure(refsets['1'], testsets['1'])
+
+		cv_neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
+		cv_neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
+		cv_neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
+		cv_pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
+		cv_pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
+		cv_pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])
 				
-	# 	accuracy.append(cv_accuracy)
-	# 	five_star_precision.append(cv_five_star_precision)
-	# 	five_star_recall.append(cv_five_star_recall)
-	# 	# four_star_precision.append(cv_four_star_precision)
-	# 	# four_star_recall.append(cv_four_star_recall)
-	# 	# three_star_precision.append(cv_three_star_precision)
-	# 	# three_star_recall.append(cv_three_star_recall)
-	# 	# two_star_precision.append(cv_two_star_precision)
-	# 	# two_star_recall.append(cv_two_star_recall)
-	# 	one_star_precision.append(cv_one_star_precision)
-	# 	one_star_recall.append(cv_one_star_recall)
-	# 	five_star_fmeasure.append(cv_five_star_fmeasure)
-	# 	# four_star_fmeasure.append(cv_four_star_fmeasure)
-	# 	# three_star_fmeasure.append(cv_three_star_fmeasure)
-	# 	# two_star_fmeasure.append(cv_two_star_fmeasure)
-	# 	one_star_fmeasure.append(cv_one_star_fmeasure)
+		accuracy.append(cv_accuracy)
+		# five_star_precision.append(cv_five_star_precision)
+		# five_star_recall.append(cv_five_star_recall)
+		# four_star_precision.append(cv_four_star_precision)
+		# four_star_recall.append(cv_four_star_recall)
+		# three_star_precision.append(cv_three_star_precision)
+		# three_star_recall.append(cv_three_star_recall)
+		# two_star_precision.append(cv_two_star_precision)
+		# two_star_recall.append(cv_two_star_recall)
+		# one_star_precision.append(cv_one_star_precision)
+		# one_star_recall.append(cv_one_star_recall)
+		# five_star_fmeasure.append(cv_five_star_fmeasure)
+		# four_star_fmeasure.append(cv_four_star_fmeasure)
+		# three_star_fmeasure.append(cv_three_star_fmeasure)
+		# two_star_fmeasure.append(cv_two_star_fmeasure)
+		# one_star_fmeasure.append(cv_one_star_fmeasure)
+
+		neg_precision.append(cv_neg_precision)
+		neg_recall.append(cv_neg_recall)
+		neg_fmeasure.append(cv_neg_fmeasure)
+		pos_precision.append(cv_pos_precision)
+		pos_recall.append(cv_pos_recall)
+		pos_fmeasure.append(cv_pos_fmeasure)
 		
-	# 	cv_count += 1
+		
+		cv_count += 1
 			
-	# print '---------------------------------------'
-	# print 'N-FOLD CROSS VALIDATION RESULT ' + '(' + classifierName + ')'
-	# print '---------------------------------------'
-	# print 'accuracy:', sum(accuracy) / n
-	# # print 'precision', (sum(five_star_precision)/n + sum(four_star_precision)/n + sum(three_star_precision)/n + sum(two_star_precision)/n + sum(one_star_precision)/n) / 5
-	# # print 'recall', (sum(five_star_recall)/n + sum(four_star_recall)/n + sum(three_star_recall)/n + sum(two_star_recall)/n + sum(one_star_recall)/n) / 5
-	# # print 'f-measure', (sum(five_star_fmeasure)/n + sum(four_star_fmeasure)/n + sum(three_star_fmeasure)/n + sum(two_star_fmeasure)/n + sum(one_star_fmeasure)/n) / 5
+	print '---------------------------------------'
+	print 'N-FOLD CROSS VALIDATION RESULT ' + '(' + classifierName + ')'
+	print '---------------------------------------'
+	print 'accuracy:', sum(accuracy) / n
+	# print 'precision', (sum(five_star_precision)/n + sum(four_star_precision)/n + sum(three_star_precision)/n + sum(two_star_precision)/n + sum(one_star_precision)/n) / 5
+	# print 'recall', (sum(five_star_recall)/n + sum(four_star_recall)/n + sum(three_star_recall)/n + sum(two_star_recall)/n + sum(one_star_recall)/n) / 5
+	# print 'f-measure', (sum(five_star_fmeasure)/n + sum(four_star_fmeasure)/n + sum(three_star_fmeasure)/n + sum(two_star_fmeasure)/n + sum(one_star_fmeasure)/n) / 5
 	# print 'precision', (sum(five_star_precision)/n + sum(one_star_precision)/n) / 2
 	# print 'recall', (sum(five_star_recall)/n + sum(one_star_recall)/n) / 2
 	# print 'f-measure', (sum(five_star_fmeasure)/n + sum(one_star_fmeasure)/n) / 2
-	# print ''
+	print 'precision', (sum(neg_precision)/n + sum(pos_precision)/n) / 2
+	print 'recall', (sum(neg_recall)/n + sum(pos_recall)/n) / 2
+	print 'f-measure', (sum(neg_fmeasure)/n + sum(pos_fmeasure)/n) / 2	
+	print ''
 	
 		
 # load_data(False)
