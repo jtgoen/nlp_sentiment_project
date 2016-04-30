@@ -201,6 +201,8 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 
     print "Testing on Sentences..."
 
+    total_accuracy = 0
+    accuracy_count = 0
     for i, (sentences, label) in enumerate(test_sent_feats):
         sent_refsets[label].add(i)
         pos_prob_total = 0
@@ -208,6 +210,8 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
         sentence_count = len(sentences)
         for sentence in sentences:
             pdist = classifier.prob_classify(featx(sentence, 4))
+            # total_accuracy += nltk.classify.util.accuracy(classifier, featx(sentence, 4))
+            # accuracy_count += 1
             pos_prob_total += pdist.prob('pos')
             neg_prob_total += pdist.prob('neg')
         if ((pos_prob_total / sentence_count) > (neg_prob_total / sentence_count)):
@@ -216,6 +220,7 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
             results = 'neg'
         sent_testsets[results].add(i)
     accuracy = nltk.classify.util.accuracy(classifier, testfeats)
+    # sent_accuracy = total_accuracy / accuracy_count
     #accuracy = nltk.classify.util.accuracy(classifier, test_sent_feats)
 
     neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
@@ -248,7 +253,7 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     print '---------------------------------------'
     print 'SENTENCES: SINGLE FOLD RESULT ' + '(' + classifierName + ')'
     print '---------------------------------------'
-    # print 'accuracy:', accuracy
+    # print 'accuracy:', sent_accuracy
     print 'precision', (sent_pos_precision + sent_neg_precision) / 2
     print 'recall', (sent_pos_recall + sent_neg_recall) / 2
     print 'f-measure', (sent_pos_fmeasure + sent_neg_fmeasure) / 2
@@ -261,6 +266,7 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     # SHUFFLE TRAIN SET
     # As in cross validation, the test chunk might have only negative or only positive data
     random.shuffle(trainfeats)
+    random.shuffle(test_sent_feats)
     n = 5  # 5-fold cross-validation
 
     subset_size = len(trainfeats) / n
