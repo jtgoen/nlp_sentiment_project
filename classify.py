@@ -191,9 +191,9 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 
     print "Testing..."
     # for i, (feats, label) in enumerate(testfeats):
-    # 	refsets[label].add(i)
-    # 	pdist = classifier.prob_classify(feats)
-    # 	print 'neg: %f\tpos: %f\t' % (pdist.prob('neg'), pdist.prob('pos'))
+    #   refsets[label].add(i)
+    #   pdist = classifier.prob_classify(feats)
+    #   print 'neg: %f\tpos: %f\t' % (pdist.prob('neg'), pdist.prob('pos'))
     for i, (feats, label) in enumerate(testfeats):
         refsets[label].add(i)
         observed = classifier.classify(feats)
@@ -203,53 +203,61 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 
     for i, (sentences, label) in enumerate(test_sent_feats):
         sent_refsets[label].add(i)
-        pos_count = 0
-        neg_count = 0
+        pos_prob_total = 0
+        neg_prob_total = 0
+        sentence_count = len(sentences)
         for sentence in sentences:
-            observed = classifier.classify(featx(sentence, 4))
-            if observed == 'neg':
-                neg_count += 1
-            elif observed == 'pos':
-                pos_count += 1
-        results = 'neg'
-        if (pos_count > neg_count):
+            pdist = classifier.prob_classify(featx(sentence, 4))
+            pos_prob_total += pdist.prob('pos')
+            neg_prob_total += pdist.prob('neg')
+        if ((pos_prob_total / sentence_count) > (neg_prob_total / sentence_count)):
             results = 'pos'
+        else:
+            results = 'neg'
         sent_testsets[results].add(i)
-    # accuracy = nltk.classify.util.accuracy(classifier, testfeats)
-    # accuracy = nltk.classify.util.accuracy(classifier, test_sent_feats)
+    accuracy = nltk.classify.util.accuracy(classifier, testfeats)
+    #accuracy = nltk.classify.util.accuracy(classifier, test_sent_feats)
 
-    # neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
-    # neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
-    # neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
+    neg_precision = nltk.metrics.precision(refsets['neg'], testsets['neg'])
+    neg_recall = nltk.metrics.recall(refsets['neg'], testsets['neg'])
+    neg_fmeasure =  nltk.metrics.f_measure(refsets['neg'], testsets['neg'])
 
-    # pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
-    # pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
-    # pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])
+    pos_precision = nltk.metrics.precision(refsets['pos'], testsets['pos'])
+    pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
+    pos_fmeasure =  nltk.metrics.f_measure(refsets['pos'], testsets['pos'])
 
-    neg_precision = nltk.metrics.precision(sent_refsets['neg'], sent_testsets['neg'])
-    neg_recall = nltk.metrics.recall(sent_refsets['neg'], sent_testsets['neg'])
-    neg_fmeasure = nltk.metrics.f_measure(sent_refsets['neg'], sent_testsets['neg'])
+    sent_neg_precision = nltk.metrics.precision(sent_refsets['neg'], sent_testsets['neg'])
+    sent_neg_recall = nltk.metrics.recall(sent_refsets['neg'], sent_testsets['neg'])
+    sent_neg_fmeasure = nltk.metrics.f_measure(sent_refsets['neg'], sent_testsets['neg'])
 
-    pos_precision = nltk.metrics.precision(sent_refsets['pos'], sent_testsets['pos'])
-    pos_recall = nltk.metrics.recall(sent_refsets['pos'], sent_testsets['pos'])
-    pos_fmeasure = nltk.metrics.f_measure(sent_refsets['pos'], sent_testsets['pos'])
+    sent_pos_precision = nltk.metrics.precision(sent_refsets['pos'], sent_testsets['pos'])
+    sent_pos_recall = nltk.metrics.recall(sent_refsets['pos'], sent_testsets['pos'])
+    sent_pos_fmeasure = nltk.metrics.f_measure(sent_refsets['pos'], sent_testsets['pos'])
 
     print ''
     print '---------------------------------------'
     print 'SINGLE FOLD RESULT ' + '(' + classifierName + ')'
     print '---------------------------------------'
-    # print 'accuracy:', accuracy
+    print 'accuracy:', accuracy
     print 'precision', (pos_precision + neg_precision) / 2
     print 'recall', (pos_recall + neg_recall) / 2
     print 'f-measure', (pos_fmeasure + neg_fmeasure) / 2
     print ''
-    classifier.show_most_informative_features()
 
+    print ''
+    print '---------------------------------------'
+    print 'SENTENCES: SINGLE FOLD RESULT ' + '(' + classifierName + ')'
+    print '---------------------------------------'
+    # print 'accuracy:', accuracy
+    print 'precision', (sent_pos_precision + sent_neg_precision) / 2
+    print 'recall', (sent_pos_recall + sent_neg_recall) / 2
+    print 'f-measure', (sent_pos_fmeasure + sent_neg_fmeasure) / 2
     print ''
 
     # CROSS VALIDATION
 
     trainfeats = neg_feats + pos_feats
+    test_sent_feats = neg_sent_feats + pos_sent_feats
     # SHUFFLE TRAIN SET
     # As in cross validation, the test chunk might have only negative or only positive data
     random.shuffle(trainfeats)
@@ -257,31 +265,25 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 
     subset_size = len(trainfeats) / n
     accuracy = []
-    five_star_precision = []
-    five_star_recall = []
-    four_star_precision = []
-    four_star_recall = []
-    three_star_precision = []
-    three_star_recall = []
-    two_star_precision = []
-    two_star_recall = []
-    one_star_precision = []
-    one_star_recall = []
     neg_precision = []
     neg_recall = []
     pos_precision = []
     pos_recall = []
-    five_star_fmeasure = []
-    four_star_fmeasure = []
-    three_star_fmeasure = []
-    two_star_fmeasure = []
-    one_star_fmeasure = []
     neg_fmeasure = []
     pos_fmeasure = []
+    sent_neg_precision = []
+    sent_neg_recall = []
+    sent_pos_precision = []
+    sent_pos_recall = []
+    sent_neg_fmeasure = []
+    sent_pos_fmeasure = []    
     cv_count = 1
 
+    print 'Starting 5-fold cross validation...'
     for i in range(n):
+        print "Fold " + str(i) + ":"
         testing_this_round = trainfeats[i * subset_size:][:subset_size]
+        sent_testing_this_round = test_sent_feats[i * subset_size:][:subset_size]
         training_this_round = trainfeats[:i * subset_size] + trainfeats[(i + 1) * subset_size:]
 
         classifier = MaxentClassifier.train(training_this_round, 'GIS', trace=0, encoding=None, labels=None,
@@ -289,10 +291,32 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
 
         refsets = collections.defaultdict(set)
         testsets = collections.defaultdict(set)
+        sent_refsets = collections.defaultdict(set)
+        sent_testsets = collections.defaultdict(set)
+
+        print "Testing..."
+
         for i, (feats, label) in enumerate(testing_this_round):
             refsets[label].add(i)
             observed = classifier.classify(feats)
             testsets[observed].add(i)
+
+        print "Testing on Sentences..."
+
+        for i, (sentences, label) in enumerate(sent_testing_this_round):
+            sent_refsets[label].add(i)
+            pos_prob_total = 0
+            neg_prob_total = 0
+            sentence_count = len(sentences)
+            for sentence in sentences:
+                pdist = classifier.prob_classify(featx(sentence, 4))
+                pos_prob_total += pdist.prob('pos')
+                neg_prob_total += pdist.prob('neg')
+            if ((pos_prob_total / sentence_count) > (neg_prob_total / sentence_count)):
+                results = 'pos'
+            else:
+                results = 'neg'
+            sent_testsets[results].add(i)            
 
         cv_accuracy = nltk.classify.util.accuracy(classifier, testing_this_round)
 
@@ -303,6 +327,13 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
         cv_pos_recall = nltk.metrics.recall(refsets['pos'], testsets['pos'])
         cv_pos_fmeasure = nltk.metrics.f_measure(refsets['pos'], testsets['pos'])
 
+        sent_cv_neg_precision = nltk.metrics.precision(sent_refsets['neg'], sent_testsets['neg'])
+        sent_cv_neg_recall = nltk.metrics.recall(sent_refsets['neg'], sent_testsets['neg'])
+        sent_cv_neg_fmeasure = nltk.metrics.f_measure(sent_refsets['neg'], sent_testsets['neg'])
+        sent_cv_pos_precision = nltk.metrics.precision(sent_refsets['pos'], sent_testsets['pos'])
+        sent_cv_pos_recall = nltk.metrics.recall(sent_refsets['pos'], sent_testsets['pos'])
+        sent_cv_pos_fmeasure = nltk.metrics.f_measure(sent_refsets['pos'], sent_testsets['pos'])
+
         accuracy.append(cv_accuracy)
 
         neg_precision.append(cv_neg_precision)
@@ -311,6 +342,13 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
         pos_precision.append(cv_pos_precision)
         pos_recall.append(cv_pos_recall)
         pos_fmeasure.append(cv_pos_fmeasure)
+
+        sent_neg_precision.append(sent_cv_neg_precision)
+        sent_neg_recall.append(sent_cv_neg_recall)
+        sent_neg_fmeasure.append(sent_cv_neg_fmeasure)
+        sent_pos_precision.append(sent_cv_pos_precision)
+        sent_pos_recall.append(sent_cv_pos_recall)
+        sent_pos_fmeasure.append(sent_cv_pos_fmeasure)
 
         cv_count += 1
 
@@ -321,6 +359,15 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     print 'precision', (sum(neg_precision) / n + sum(pos_precision) / n) / 2
     print 'recall', (sum(neg_recall) / n + sum(pos_recall) / n) / 2
     print 'f-measure', (sum(neg_fmeasure) / n + sum(pos_fmeasure) / n) / 2
+    print ''
+
+    print '---------------------------------------'
+    print 'SENTENCES: N-FOLD CROSS VALIDATION RESULT ' + '(' + classifierName + ')'
+    print '---------------------------------------'
+    # print 'accuracy:', sum(accuracy) / n
+    print 'precision', (sum(sent_neg_precision) / n + sum(sent_pos_precision) / n) / 2
+    print 'recall', (sum(sent_neg_recall) / n + sum(sent_pos_recall) / n) / 2
+    print 'f-measure', (sum(sent_neg_fmeasure) / n + sum(sent_pos_fmeasure) / n) / 2
     print ''
 
 
