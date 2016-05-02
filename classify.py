@@ -190,10 +190,6 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     sent_testsets = collections.defaultdict(set)
 
     print "Testing..."
-    # for i, (feats, label) in enumerate(testfeats):
-    #   refsets[label].add(i)
-    #   pdist = classifier.prob_classify(feats)
-    #   print 'neg: %f\tpos: %f\t' % (pdist.prob('neg'), pdist.prob('pos'))
     for i, (feats, label) in enumerate(testfeats):
         refsets[label].add(i)
         observed = classifier.classify(feats)
@@ -209,8 +205,6 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
         sentence_count = len(sentences)
         for sentence in sentences:
             pdist = classifier.prob_classify(featx(sentence, 4))
-            # total_accuracy += nltk.classify.util.accuracy(classifier, featx(sentence, 4))
-            # accuracy_count += 1
             pos_prob_total += pdist.prob('pos')
             neg_prob_total += pdist.prob('neg')
         if ((pos_prob_total / sentence_count) > (neg_prob_total / sentence_count)):
@@ -258,7 +252,7 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     print 'recall', (sent_pos_recall + sent_neg_recall) / 2
     print 'f-measure', (sent_pos_fmeasure + sent_neg_fmeasure) / 2
     print ''
-
+ 
     # CROSS VALIDATION
 
     trainfeats = neg_feats + pos_feats
@@ -382,6 +376,9 @@ def evaluate_classifier(featx, number_of_features, remove_stopwords):
     print 'f-measure', (sum(sent_neg_fmeasure) / n + sum(sent_pos_fmeasure) / n) / 2
     print ''
 
-
+# load_data(False)
+# evaluate_classifier(multiple_word_feats, 1, False)
 load_data(True)
+# evaluate_classifier(multiple_word_feats, 2, True)
+# evaluate_classifier(multiple_word_feats, 3, True)
 evaluate_classifier(multiple_word_feats, 4, True)
